@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS DetalleVenta (
     detalle_id INT PRIMARY KEY AUTO_INCREMENT,
     venta_id INT,
     producto_id INT,
-    cantidad INT NOT,
+    cantidad INT,
     subtotal DECIMAL(10, 2),
     FOREIGN KEY (venta_id) REFERENCES Ventas(venta_id),
     FOREIGN KEY (producto_id) REFERENCES Productos(producto_id)
@@ -62,13 +62,13 @@ CREATE TABLE IF NOT EXISTS DetalleVenta (
 ### SQL
 
 ```sql
-INSERT INTO Clientes (cliente_id, nombre, direccion, telefono, email)
+INSERT INTO Clientes (nombre, direccion, telefono, email)
 VALUES
-(1, 'Juan Pérez', 'Calle Falsa 123, Springfield', '555-1234', 'juan.perez@example.com'),
-(2, 'Ana Gómez', 'Avenida Siempre Viva 456, Springfield', '555-5678', 'ana.gomez@example.com'),
-(3, 'Carlos Fernández', 'Plaza Central 789, Shelbyville', '555-8765', 'carlos.fernandez@example.com'),
-(4, 'María López', 'Calle Real 321, Shelbyville', '555-4321', 'maria.lopez@example.com'),
-(5, 'Pedro Martínez', 'Boulevard de los Sueños 654, Springfield', '555-9876', 'pedro.martinez@example.com');
+('Juan Pérez', 'Calle Falsa 123, Springfield', '555-1234', 'juan.perez@example.com'),
+('Ana Gómez', 'Avenida Siempre Viva 456, Springfield', '555-5678', 'ana.gomez@example.com'),
+('Carlos Fernández', 'Plaza Central 789, Shelbyville', '555-8765', 'carlos.fernandez@example.com'),
+('María López', 'Calle Real 321, Shelbyville', '555-4321', 'maria.lopez@example.com'),
+('Pedro Martínez', 'Boulevard de los Sueños 654, Springfield', '555-9876', 'pedro.martinez@example.com');
 
 
 ``` 
@@ -84,13 +84,13 @@ VALUES
 | 5           | Auriculares Gaming       | Auriculares con micrófono y sonido envolvente                  | 120.00   | 30     |
 
 ```sql
-INSERT INTO Productos (producto_id, nombre, descripcion, precio, stock)
+INSERT INTO Productos (nombre, descripcion, precio, stock)
 VALUES
-(1, 'Laptop Gamer', 'Laptop con procesador i7, 16GB RAM, 512GB SSD', 1500.00, 10),
-(2, 'Monitor 24" Full HD', 'Monitor LED 24 pulgadas, resolución Full HD', 200.00, 20),
-(3, 'Teclado Mecánico', 'Teclado mecánico retroiluminado RGB', 80.00, 15),
-(4, 'Ratón Ergonómico', 'Ratón ergonómico con ajuste de DPI', 50.00, 25),
-(5, 'Auriculares Gaming', 'Auriculares con micrófono y sonido envolvente', 120.00, 30);
+('Laptop Gamer', 'Laptop con procesador i7, 16GB RAM, 512GB SSD', 1500.00, 10),
+('Monitor 24" Full HD', 'Monitor LED 24 pulgadas, resolución Full HD', 200.00, 20),
+('Teclado Mecánico', 'Teclado mecánico retroiluminado RGB', 80.00, 15),
+('Ratón Ergonómico', 'Ratón ergonómico con ajuste de DPI', 50.00, 25),
+('Auriculares Gaming', 'Auriculares con micrófono y sonido envolvente', 120.00, 30);
 ```
 
 ### Data Ventas
@@ -130,14 +130,14 @@ VALUES
 
 
 ```sql
-INSERT INTO DetalleVenta (detalle_id, venta_id, producto_id, cantidad, subtotal)
+INSERT INTO DetalleVenta (venta_id, producto_id, cantidad, subtotal)
 VALUES
-(1, 1, 1, 1, 1500.00),
-(2, 1, 2, 1, 200.00),
-(3, 2, 2, 1, 200.00),
-(4, 3, 3, 1, 80.00),
-(5, 4, 4, 1, 50.00),
-(6, 5, 5, 1, 120.00);
+(1, 1, 1, 1500.00),
+(1, 2, 1, 200.00),
+(2, 2, 1, 200.00),
+(3, 3, 1, 80.00),
+(4, 4, 1, 50.00),
+(5, 5, 1, 120.00);
 --Inserciones ok
 ```
 
@@ -299,7 +299,7 @@ SELECT
     c.nombre,
     SUM(v.total) AS total_compras
 FROM Clientes c
-JOIN Ventas v ON c.cliente_id = v.cliente_id
+LEFT JOIN Ventas v ON c.cliente_id = v.cliente_id
 GROUP BY c.cliente_id, c.nombre;
 
 ```
@@ -413,8 +413,8 @@ SELECT *
 FROM vista_contar_punto_com;
 
 
-total_clientes_com	
-5	
+-- total_clientes_com	
+-- 5	
 ```
 
 
@@ -484,7 +484,16 @@ Ventas	total	decimal(10,2)	YES
 
 ```
 
+MAS BASICO >>> HACER ESTE CASO
+```sql 
 
+SELECT 
+    TABLE_NAME AS nombre,
+    TABLE_TYPE AS tipo
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = 'CompumundohipermegaredSA'
+ORDER BY TABLE_TYPE, TABLE_NAME;
+```
 
 
 ```sql 
@@ -547,6 +556,8 @@ JOIN Ventas v ON c.cliente_id = v.cliente_id
 GROUP BY c.cliente_id, c.nombre
 HAVING SUM(v.total) > 100;
 ```
+
+
 ```sql
 db/CompumundohipermegaredSA/Clientes/
 
@@ -598,11 +609,11 @@ FROM vista_clientes_mas_100;
 DELIMITER $$
 
 CREATE TRIGGER trg_homero
-BEFORE INSERT ON Clientes
+BEFORE INSERT OR UPDATE ON Clientes
 FOR EACH ROW
 BEGIN
     IF NEW.nombre = 'Homero' AND
-       (SELECT COUNT(*) FROM Clientes WHERE nombre = 'Homero') >= 1 THEN
+       (SELECT COUNT(*) FROM Clientes WHERE nombre LIKE '%Homero%') >= 1 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'Solo se permite un cliente llamado Homero';
     END IF;
@@ -616,12 +627,12 @@ PASS
 ```sql
 -- Primera inserción (ok)
 INSERT INTO Clientes (nombre, direccion, telefono, email)
-VALUES ('Homero', '742 Evergreen Terrace', '555-0001', 'homero@mailfalso.com');
+VALUES ('Homero J Simpson', '742 Evergreen Terrace', '555-0001', 'homero@mailfalso.com');
 ```
 
 FAIL
 ```sql
 -- Segunda inserción (fallar)
 INSERT INTO Clientes (nombre, direccion, telefono, email)
-VALUES ('Homero', 'Av siempre Viva 123', '555-6666', 'homero@plantaenergianuclearspringfield.com');
+VALUES ('Homero Thomson', 'Av siempre Viva 123', '555-6666', 'homero@plantaenergianuclearspringfield.com');
 ``` 
